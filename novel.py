@@ -1,5 +1,10 @@
 __author__ = 'zhongjr'
 
+# 调用层次不是很清晰，建议分为三层，按顺序排列：
+# 1、工具函数（utils.py）：包括 get_url、loop_tags 和 loop_tag，还有去除干扰文字的函数
+# 2、中间函数（novel.py）：包括 get_novelurl、get_novelinfo、get_article 和 get_text
+# 3、目标函数（main.py） ：get_novel
+
 import os
 import requests
 from bs4 import BeautifulSoup as bs
@@ -114,15 +119,16 @@ class Novel(object):
         # print(bs(str(soup.select('div[class="noveltext"]')[0]).replace('<b>', ''), 'lxml').strings) # 输出在前面可以，后面不行，可能这个函数无法正常返回，直接取这个标签的文本算了，不要搞这么麻烦
         # novel = loop_tag('', noveltext)
 
-        # 获取章节内容后面的作者有话说
+        # 获取章节内容后面的作话
         # 必须放在获取章节文本前面，extract() 方法会导致获取 readsmall 标签失败
+        # 改进：在"作者有话要说："后面加上换行
         auwords_pre = ''
         auwords_lst = ''
         readsmall_1 = ''
         readsmall_2 = ''
         # 如果写了异常处理的代码，即使 try 这段报错，也会继续执行下去，不会中断
         try:
-            # 章节前面的作者有话说
+            # 章节前面的作话
             readsmall_1 = soup.select('div[class="noveltext"] div#show')[0].find_next_sibling('div', attrs={'class': 'readsmall'})
             if readsmall_1:
                 auwords_pre = self.loop_tag(readsmall_1)
@@ -132,7 +138,7 @@ class Novel(object):
             print(e) # 如果这章没有前面的作话，会报错list index out of range，但是上面已经写了if了，不知道哪里出了问题，如果不想它报错可以把e去掉
 
         try:
-            # 章节后面的作者有话说
+            # 章节后面的作话
             readsmall_2 = soup.select('div[class="noveltext"] div#favoriteshow_3')[0].find_next_sibling('div', attrs={'class': 'readsmall'}) # 应该是这句报错，如果不获取上面的正文，就不会报错，可能跟 soup 有关
             if readsmall_2:
                 auwords_lst = self.loop_tag(readsmall_2)
