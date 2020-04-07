@@ -1,8 +1,8 @@
-# Time : 2020-04-06 23:03 
+# Time : 2020-04-06 23:03
 
 # Author : zhongjr
 
-# File : otherweb.py 
+# File : otherweb.py
 
 # Purpose: 晋江部分章节被锁，从其他网站获取章节内容
 
@@ -31,17 +31,15 @@ def get_url(url):
     return soup
 
 
-def get_novel(url):
+def get_novel(url, novelname, author):
 
     chapters = get_url(url).select('td.ccss a')  # 所有章节的 a 标签
     article = []
-    text = ''
-    novelname = '同桌那个坏同学'
-    author = '福禄丸子'
+
 
     filepath = os.getcwd() + '/' + novelname + '.txt'
 
-    for tr in chapters[0:1]:
+    for tr in chapters:
 
         href = url + tr.get('href')
         title = tr.text
@@ -53,11 +51,14 @@ def get_novel(url):
 
         article.append(data)
 
-    with open(filepath, mode='w+', encoding='gb18030') as f:
+    with open(filepath, mode='w+', encoding='utf-8') as f:
+
+        print('writing...')
 
         f.write('    ' + novelname + '\n\n')
         f.write('    ' + '作者：' + author + '\n\n')
 
+        # text = ''
         # 循环获取章节文本
         for ar in article:
 
@@ -66,7 +67,7 @@ def get_novel(url):
             chapter = get_url(ar['href'])
             lines = chapter.select('div#content')[0]
             for line in lines.strings:
-                line = line.replace('　　', '\n').lstrip()  # 作话换行，还没替换干扰文本
+                line = line.replace('　　', '\n\n    ').lstrip()  # 作话换行，还没替换干扰文本
                 text = text + '    ' + line + '\n\n'
 
             f.write(text)
@@ -76,5 +77,6 @@ def get_novel(url):
 
 if __name__ == '__main__':
     url = 'http://www.k6uk.com/novel/59/59990/'
-    get_novel(url)
-
+    novelname = '同桌那个坏同学'
+    author = '福禄丸子'
+    get_novel(url, novelname, author)
