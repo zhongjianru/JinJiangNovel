@@ -15,27 +15,26 @@ from fake_useragent import UserAgent
 def get_url(url):
     location = os.getcwd() + '/fake_useragent.json'
     headers = {'user-agent': UserAgent(path=location).random}
-    soup = ''
+    # soup = ''
 
     try:
 
         res = requests.get(url, headers=headers)
         res.encoding = 'gb18030'
         soup = bs(res.text, 'lxml')
+        return soup
 
     except Exception as e:
 
         print('get url failed.')
         print('Exception:', e)
-
-    return soup
+        return
 
 
 def get_novel(url, novelname, author):
 
     chapters = get_url(url).select('td.ccss a')  # 所有章节的 a 标签
     article = []
-
 
     filepath = os.getcwd() + '/' + novelname + '.txt'
 
