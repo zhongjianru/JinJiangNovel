@@ -7,12 +7,14 @@
 # Purpose: 晋江部分章节被锁，从其他网站获取章节内容
 
 import os
+import re
 import requests
 from bs4 import BeautifulSoup as bs
 from fake_useragent import UserAgent
 
 
 def get_url(url):
+
     location = os.getcwd() + '/fake_useragent.json'
     headers = {'user-agent': UserAgent(path=location).random}
     # soup = ''
@@ -29,6 +31,24 @@ def get_url(url):
         print('get url failed.')
         print('Exception:', e)
         return
+
+
+def re_text(text):
+
+    # author = 'Christian Böhm (Ludwig-Maximilians-Universität München)'  # 处理后只留下前面的作者名，括号内容去掉
+    # pattern = re.compile('.*(\(.*\))')  # 对括号进行转义，避免 Python 认为是在添加子块
+    pattern = re.compile('.*(\(((w|W|ｗ).*(c|o|m|C|O|M|ｍ)|(看啦又看).*)\))')  # 指定 w 开头 m 结尾的字符串
+    match = re.match(pattern=pattern, string=text)
+
+    if match:
+
+        temp = match.group(0)  # 原字符串
+        result = re.sub(pattern='\(' + match.group(1) + '\)', repl='', string=text)  # 将匹配到的字符串替换掉
+        return re_text(result)  # 递归调用，每次去除一处干扰字符，要写 return
+
+    else:
+
+        return text  # 如果不需要再继续处理，返回原字符串
 
 
 def get_novel(url, novelname, author):
@@ -66,7 +86,8 @@ def get_novel(url, novelname, author):
             chapter = get_url(ar['href'])
             lines = chapter.select('div#content')[0]
             for line in lines.strings:
-                line = line.replace('　　', '\n\n    ').lstrip()  # 作话换行，还没替换干扰文本
+                line = line.replace('　　', '\n\n    ').lstrip()  # 作话换行
+                line = re_text(line)  # 替换干扰文本
                 text = text + '    ' + line + '\n\n'
 
             f.write(text)
