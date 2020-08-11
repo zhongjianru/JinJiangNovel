@@ -33,7 +33,8 @@ def get_url(url):
         return
 
 
-def re_text(text):
+# 递归调用
+def rec_text(text):
 
     # author = 'Christian Böhm (Ludwig-Maximilians-Universität München)'  # 处理后只留下前面的作者名，括号内容去掉
     # pattern = re.compile('.*(\(.*\))')  # 对括号进行转义，避免 Python 认为是在添加子块
@@ -44,11 +45,17 @@ def re_text(text):
 
         temp = match.group(0)  # 原字符串
         result = re.sub(pattern='\(' + match.group(1) + '\)', repl='', string=text)  # 将匹配到的字符串替换掉
-        return re_text(result)  # 递归调用，每次去除一处干扰字符，要写 return
+        return rec_text(result)  # 递归调用，每次去除一处干扰字符，要写 return
 
     else:
 
         return text  # 如果不需要再继续处理，返回原字符串
+
+
+def re_text(text):
+    pattern = re.compile('\(((w|W|ｗ).*(c|o|m|C|O|M|ｍ)|(看啦又看).*)\)')  # 跟上面的pattern不一样
+    result = re.sub(pattern=pattern, string=text, repl='')
+    return result
 
 
 def get_novel(url, novelname, author):
