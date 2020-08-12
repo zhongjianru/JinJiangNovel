@@ -23,6 +23,7 @@ def popo_spider():
     username = ''  # 账号
     password = ''  # 密码
 
+    print('start to login...')
     driver.get(login_url)
     input1 = driver.find_element_by_name('account')
     input1.clear()
@@ -34,11 +35,12 @@ def popo_spider():
     btn_login.click()
     time.sleep(1)
 
+    print('getting novel...')
     driver.get(novel_url)
     novelname = driver.find_element_by_class_name('book_name').text
     author = driver.find_element_by_class_name('book_author').text
     chapter_num = driver.find_element_by_class_name('statu').text
-    print(novelname, author)
+    print('novelname:', novelname, ', author:', author)
     filepath = os.getcwd() + '/' + novelname + '.txt'
 
     page = 1  # 页数要准确，可以由上面的章节总数确定
@@ -55,7 +57,7 @@ def popo_spider():
     for p in (list(range(1, page+1))):
         try:
             driver.get(articles_url.format(str(p)))
-            print('getting page', p, '...')
+            print('getting page', p, ',', page, 'totally.')
             for i in (list(range(1, step+1))):
                 try:
                     num = driver.find_element_by_xpath(path['num'].format(str(i))).text
