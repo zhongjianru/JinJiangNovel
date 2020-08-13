@@ -1,22 +1,6 @@
-import os
 import re
 import requests
 from bs4 import BeautifulSoup as bs
-
-
-# 新增：读取本地 cookie 文件
-def read_cookies():
-    cookie_file = 'cookies.txt'
-    if os.path.exists(cookie_file):
-        with open(cookie_file, 'r+') as f:
-            cookies = f.read()
-    else:
-        with open(cookie_file, 'w+') as f:
-            cookies = ''
-            f.write(cookies)
-
-    print('reading', cookie_file, '...')
-    return cookies
 
 
 # 构造请求头
