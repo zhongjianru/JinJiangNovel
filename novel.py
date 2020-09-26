@@ -68,19 +68,21 @@ class Novel(object):
         chapters = []
 
         for tr in chapter_list:
-            # 非 vip 章节
-            if len(tr.select('a[itemprop="url"]')) > 0 and len(tr.select('a[style="cursor:pointer"]')) <= 0:
-                title = tr.select('a[itemprop="url"]')[0].text  # text 可以用 .text 获取，但是 href 只能用 get 方法获取（标签属性）
-                url = tr.select('a[itemprop="url"]')[0].get('href')
-                lastModify = tr.select('td')[5].find_next('span').text.lstrip().rstrip()
-                isvip = False
+            # 判断章节是否被锁
+            if tr.select('a[itemprop="url"]'):
+                # 非 vip 章节
+                if not tr.select('a[style="cursor:pointer"]'):
+                    title = tr.select('a[itemprop="url"]')[0].text  # text 可以用 .text 获取，但是 href 只能用 get 方法获取（标签属性）
+                    url = tr.select('a[itemprop="url"]')[0].get('href')
+                    lastModify = tr.select('td')[5].find_next('span').text.lstrip().rstrip()
+                    isvip = False
 
-            # vip 章节
-            else:
-                title = tr.select('a[itemprop="url"]')[0].text  # + tr.select('a')[1].text  # 加上 [VIP] 标志
-                url = tr.select('a[itemprop="url"]')[0].get('rel')[0]  # 不知道为什么返回的是个 list
-                lastModify = tr.select('td')[4].find_next('span').text.lstrip().rstrip()
-                isvip = True
+                # vip 章节
+                else:
+                    title = tr.select('a[itemprop="url"]')[0].text  # + tr.select('a')[1].text  # 加上 [VIP] 标志
+                    url = tr.select('a[itemprop="url"]')[0].get('rel')[0]  # 不知道为什么返回的是个 list
+                    lastModify = tr.select('td')[4].find_next('span').text.lstrip().rstrip()
+                    isvip = True
 
             summary = tr.select('td')[2].text.strip()  # 章节简介，2表示第三个td标签
             num = tr.select('td')[0].text.strip()
@@ -146,15 +148,17 @@ class Novel(object):
             readsmall_1 = soup.select('div[class="noveltext"] div#show')[0].find_next_sibling('div', attrs={'class': 'readsmall'})
             if readsmall_1:
                 auwords_pre = utils.loop_tag(readsmall_1)
+                auwords_pre = auwords_pre[:11] + '\n\n' + '    ' + auwords_pre[11:]
                 auwords_pre = auwords_pre + '    ----' + '\n\n'
         except Exception as e:
-            print(e)  # 如果这章没有前面的作话，会报错list index out of range，但是上面已经写了if了，不知道哪里出了问题，如果不想它报错可以把e去掉
+            print(e)  # 如果这章没有前面的作话，会报错list index out of range，但是上面已经写了if了，不知道哪里出了问题，如果不想它报错可以把e去掉（因为先赋值了）
 
         try:
             # 章节后面的作话
             readsmall_2 = soup.select('div[class="noveltext"] div#favoriteshow_3')[0].find_next_sibling('div', attrs={'class': 'readsmall'}) # 应该是这句报错，如果不获取上面的正文，就不会报错，可能跟 soup 有关
             if readsmall_2:
                 auwords_lst = utils.loop_tag(readsmall_2)
+                auwords_lst = auwords_lst[:11] + '\n\n' + '    ' + auwords_lst[11:]
                 auwords_lst = '    ----' + '\n\n' + auwords_lst
         except Exception as e:
             print(e)
