@@ -10,24 +10,20 @@ import utils
 import time
 import random
 import urllib
+import re
 from bs4 import BeautifulSoup as bs
 
 
 class Novel(object):
     def __init__(self, novel_name, chapter_bgn, chapter_end, cookies):
-        userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36'
+        userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36'
         # userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:69.0) Gecko/20100101 Firefox/69.0'
 
         self.novel_name = novel_name
         self.chapter_bgn = chapter_bgn
         self.chapter_end = chapter_end
         self.cookies = cookies
-        self.headers = {
-            'Cookie': cookies,  # vip 章节的 cookie 和登录的 cookie 不一样
-            'Host': 'my.jjwxc.net',
-            'Upgrade-Insecure-Requests': '1',
-            'User-Agent': userAgent,
-        }
+        self.headers = utils.get_headers(cookies)
 
     # 根据名称获取小说主页 url
     def get_novelurl(self):
@@ -116,6 +112,8 @@ class Novel(object):
         else:
             soup = utils.get_url(chapter['url'], headers=self.headers)
 
+        # print(soup)  # 调试用
+
         # novel = soup.select('div[class="noveltext"]')[0].text # 返回 noveltext 标签中的所有内容，这个内容太杂，需要再处理
         # return re_text(novel) # 返回正则匹配的结果，这个正则返回的结果不对
 
@@ -145,7 +143,7 @@ class Novel(object):
         # 如果写了异常处理的代码，即使 try 这段报错，也会继续执行下去，不会中断
         try:
             # 章节前面的作话
-            readsmall_1 = soup.select('div[class="noveltext"] div#show')[0].find_next_sibling('div', attrs={'class': 'readsmall'})
+            readsmall_1 = soup.select('div.noveltext div#show')[0].find_next_sibling('div', attrs={'class': 'readsmall'})
             if readsmall_1:
                 auwords_pre = utils.loop_tag(readsmall_1)
                 auwords_pre = auwords_pre[:11] + '\n\n' + '    ' + auwords_pre[11:]
@@ -155,7 +153,7 @@ class Novel(object):
 
         try:
             # 章节后面的作话
-            readsmall_2 = soup.select('div[class="noveltext"] div#favoriteshow_3')[0].find_next_sibling('div', attrs={'class': 'readsmall'}) # 应该是这句报错，如果不获取上面的正文，就不会报错，可能跟 soup 有关
+            readsmall_2 = soup.select('div.noveltext div#favoriteshow_3')[0].find_next_sibling('div', attrs={'class': 'readsmall'}) # 应该是这句报错，如果不获取上面的正文，就不会报错，可能跟 soup 有关
             if readsmall_2:
                 auwords_lst = utils.loop_tag(readsmall_2)
                 auwords_lst = auwords_lst[:11] + '\n\n' + '    ' + auwords_lst[11:]
@@ -168,17 +166,51 @@ class Novel(object):
             auwords_pre = ''
 
         # 方法四，直接取 noveltext 的文本
-        text = soup.select('div[class="noveltext"]')[0]
+        text = soup.select('div.noveltext')[0]
         [s.extract() for s in text(['script', 'div'])]  # 将标签中的子标签移除（传入 list 移除多个标签）
         novel = utils.loop_tag(text)
 
         novel_text = auwords_pre + novel + auwords_lst
         return novel_text
 
+    # 替换干扰文本，规范标点符号
+    def re_text(self, text):
+        re_text = text
+
+        # 替换不打印字符（干扰字后面会有，如果想检查干扰字也可以替换成别的）
+        re_text = re_text.replace('&zwnj;', '')
+
+        # 读取干扰文本
+        with open(file='txt/re_words.txt', mode='r+', encoding='utf-8') as f:
+            words = f.read()
+        re_words = dict((p[0], p[2] if p[2] != '-' else p[3]) for p in words.splitlines())
+
+        # 替换干扰文本
+        pattern1 = re.compile('|'.join(re_words.keys()))
+        re_text = re.sub(pattern1, lambda x: re_words[re.escape(x.group(0))], string=re_text)
+
+        # 替换多个空格：停用
+        # pattern2 = re.compile(r'\s+')
+        # re_text = re.sub(pattern=pattern2, repl=' ', string=re_text)
+
+        # 匹配中文方案：停用，情况比较多
+        # pattern3 = re.compile(r'([\u4e00-\u9fff]+)(\s*)(,)')  # 中文/空格/逗号
+        # re_text = re.findall(pattern=pattern3, string=re_text)  # 正则匹配结果
+
+        # 匹配英文方案：先将英文逗号全部替换成中文逗号，再还原英文中的逗号
+        pattern3 = re.compile(r'(\s*)(,|，)(\s*)')  # 空格/逗号/空格
+        re_text = re.sub(pattern=pattern3, repl='，', string=re_text)
+
+        # 还原英文标点
+        pattern4 = re.compile(r'([a-zA-Z]+)(，)([a-zA-Z]+)')
+        re_text = re.sub(pattern=pattern4, repl=r'\1, \3', string=re_text)  # \1代表正则匹配到的第一部分
+
+        return re_text
+
     def write_file(self, novel_info, chapters):
         # desktop = os.path.join(os.path.expanduser("~"), 'Desktop')
         # filepath = desktop + '\\' + novelinfo['title'] + '.txt'
-        filepath = novel_info['title'] + '.txt'
+        filepath = 'novel/' + novel_info['title'] + '.txt'
         print('filepath:', filepath)
         print('start writing in...')
 
@@ -190,9 +222,10 @@ class Novel(object):
             for chapter in chapters[(self.chapter_bgn-1 if self.chapter_bgn else None): self.chapter_end]:  # 切片选择部分章节
                 try:
                     chaptertext = self.get_noveltext(chapter)  # 这个函数没有处理异常，vip 章节读取从这里开始出错，后面都不会执行
+                    chaptertext = self.re_text(chaptertext)  # 替换干扰文本
                     print(chapter['num'], chapter['title'], '[VIP]' if chapter['isvip'] else '', chapter['summary'], chapter['url'], '字数:', chapter['wordCount'], '最近修改时间:', chapter['lastModify'])
                     print('(章节内容为空)') if chaptertext == '' else ''
-                    f.write('    第' + chapter['num'] + '章 ' + chapter['title'] + '\n\n')
+                    f.write('    第' + chapter['num'] + '章 ' + chapter['title'] + ' ' + chapter['summary'] + '\n\n')
                     f.write(chaptertext + '\n')
                     time.sleep(random.uniform(2, 5))  # 暂时挂起
                 except Exception as e:
