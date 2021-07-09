@@ -6,18 +6,28 @@
 
 # Purpose: 晋江部分章节被锁，从其他网站获取章节内容
 
+import utils
 import os
 import re
 import requests
 from bs4 import BeautifulSoup as bs
 from fake_useragent import UserAgent
+import time
 
 
 def get_url(url):
 
-    location = os.getcwd() + '/fake_useragent.json'
-    headers = {'user-agent': UserAgent(path=location).random}
-    # soup = ''
+    # location = os.getcwd() + '/fake_useragent.json'
+    # headers = {'User-Agent': UserAgent(path=location).random, 'Accept-Language': 'zh-CN,zh;q=0.9'}
+    headers = {
+        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+        'Accept-Encoding': 'gzip,deflate',
+        'Accept-Language': 'zh-CN,zh;q=0.9',
+        # 'Connection': 'keep-alive',
+        # 'Host': 'api.share.baidu.com',
+        'Referer': 'http://www.biquge.tv/',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36',
+    }
 
     try:
 
@@ -60,14 +70,16 @@ def re_text(text):
 
 def get_novel(url, novelname, author):
 
-    chapters = get_url(url).select('td.ccss a')  # 所有章节的 a 标签
+    chapters = get_url(url).select('div#list a')  # 所有章节的 a 标签
     article = []
 
     filepath = os.getcwd() + '/' + novelname + '.txt'
 
-    for tr in chapters:
+    print(chapters)
 
-        href = url + tr.get('href')
+    for tr in chapters[:]:
+
+        href = 'http://www.biquge.tv' + tr.get('href')
         title = tr.text
 
         data = {
@@ -77,33 +89,36 @@ def get_novel(url, novelname, author):
 
         article.append(data)
 
-    with open(filepath, mode='w+', encoding='utf-8') as f:
+    with open(filepath, mode='w+', encoding='gb18030') as f:
 
-        print('writing...')
+        print('start writing...')
 
         f.write('    ' + novelname + '\n\n')
         f.write('    ' + '作者：' + author + '\n\n')
 
         # text = ''
         # 循环获取章节文本
-        for ar in article:
+        for pt in article:
+            print('writing:', pt)
 
-            text = '    ' + ar['title'] + '\n\n'
+            text = '    ' + pt['title'] + '\n\n'
 
-            chapter = get_url(ar['href'])
-            lines = chapter.select('div#content')[0]
-            for line in lines.strings:
-                line = line.replace('　　', '\n\n    ').lstrip()  # 作话换行
-                line = re_text(line)  # 替换干扰文本
-                text = text + '    ' + line + '\n\n'
+            try:
+                chapter = get_url(pt['href'])
+            except Exception as e:
+                pass
+
+            content = chapter.select('div#content')[0]
+            text = text + utils.loop_tag(content)
 
             f.write(text)
+            time.sleep(2)  # 暂时挂起
 
         print('write down.')
 
 
 if __name__ == '__main__':
-    url = 'http://www.k6uk.com/novel/59/59990/'
-    novelname = '同桌那个坏同学'
-    author = '福禄丸子'
+    url = 'http://www.biquge.tv/41_41896/'
+    novelname = '慵来妆'
+    author = '溪畔茶'
     get_novel(url, novelname, author)
