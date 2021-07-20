@@ -70,7 +70,7 @@ def re_text(text):
 
 def get_novel(url, novelname, author):
 
-    chapters = get_url(url).select('div#list a')  # 所有章节的 a 标签
+    chapters = get_url(url).select('div.listmain a')  # 所有章节的 a 标签
     article = []
 
     filepath = os.getcwd() + '/' + novelname + '.txt'
@@ -79,7 +79,7 @@ def get_novel(url, novelname, author):
 
     for tr in chapters[:]:
 
-        href = 'http://www.biquge.tv' + tr.get('href')
+        href = 'https://www.lewentxt.com' + tr.get('href')
         title = tr.text
 
         data = {
@@ -109,7 +109,7 @@ def get_novel(url, novelname, author):
                 pass
 
             content = chapter.select('div#content')[0]
-            text = text + utils.loop_tag(content)
+            text = text + utils.loop_tag(content).replace(' ', '').replace(', ', '，')
 
             f.write(text)
             time.sleep(2)  # 暂时挂起
@@ -118,7 +118,7 @@ def get_novel(url, novelname, author):
 
 
 if __name__ == '__main__':
-    url = 'http://www.biquge.tv/41_41896/'
+    url = 'https://www.lewentxt.com/60/60369/'
     novelname = '慵来妆'
     author = '溪畔茶'
     get_novel(url, novelname, author)
