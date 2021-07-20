@@ -45,9 +45,23 @@ def loop_tag(tartag):
     return result
 
 
-# 替换干扰内容
-def re_text(text, pattern):
-    pattern = re.compile(pattern)
-    result = re.sub(pattern=pattern, string=text, repl='')
-    return result
+# 文本格式化
+def re_text(text):
+    # 替换多个空格：停用
+    # pattern1 = re.compile(r'\s+')
+    # text = re.sub(pattern=pattern1, repl=' ', string=text)
+
+    # 匹配中文方案：停用，情况比较多
+    # pattern2 = re.compile(r'([\u4e00-\u9fff]+)(\s*)(,)')  # 中文/空格/逗号
+    # text = re.findall(pattern=pattern2, string=text)  # 正则匹配结果
+
+    # 匹配英文方案：先将英文逗号全部替换成中文逗号，再还原英文中的逗号
+    pattern3 = re.compile(r'(\s*)(,|，)(\s*)')  # 空格/逗号/空格
+    text = re.sub(pattern=pattern3, repl='，', string=text)
+
+    # 还原英文标点
+    pattern4 = re.compile(r'([a-zA-Z]+)(，)([a-zA-Z]+)')
+    text = re.sub(pattern=pattern4, repl=r'\1, \3', string=text)  # \1 代表正则匹配到的第一部分
+
+    return text
 
