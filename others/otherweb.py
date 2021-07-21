@@ -6,12 +6,11 @@
 
 # Purpose: 晋江部分章节被锁，从其他网站获取章节内容
 
-import utils
+from main import utils
 import os
 import re
 import requests
 from bs4 import BeautifulSoup as bs
-from fake_useragent import UserAgent
 import time
 
 

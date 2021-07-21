@@ -19,9 +19,9 @@ def popo_spider():
     articles_url = novel_url + '/articles?page={}'
 
     opt = webdriver.FirefoxOptions()  # 创建chrome参数对象
-    driver = webdriver.Firefox(options=opt)
-    username = ''  # 账号
-    password = ''  # 密码
+    driver = webdriver.Firefox(options=opt, executable_path='/Users/kinyuchung/Downloads/geckodriver')
+    username = '15603006502'  # 账号
+    password = 'zjr19941228'  # 密码
 
     print('start to login...')
     driver.get(login_url)

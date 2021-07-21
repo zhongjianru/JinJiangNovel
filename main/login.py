@@ -6,7 +6,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
-cookie_file = 'cookies.txt'
+cookie_file = './files/cookies.txt'
 login_url = 'http://my.jjwxc.net/'
 chap_url = 'http://my.jjwxc.net/onebook_vip.php?novelid=3288706&chapterid=22'
 
@@ -32,7 +32,7 @@ def test_cookies(cookies):
     noveltext = ''
     isvalid = True
     try:
-        noveltext = soup.select('div[class="noveltext"]')[0]
+        noveltext = soup.select('div.noveltext')[0]
     except:
         pass
     if noveltext == '':
@@ -43,9 +43,9 @@ def test_cookies(cookies):
 # 用户登录
 def user_login(username, password):
     # 打开登录页面
-    opt = webdriver.FirefoxOptions()
-    opt.add_argument('--headless')
-    driver = webdriver.Firefox(options=opt)
+    opt = webdriver.ChromeOptions()
+    # opt.add_argument('--headless')
+    driver = webdriver.Chrome(options=opt, executable_path='/Users/kinyuchung/Downloads/chromedriver')
     driver.get(login_url)
 
     # 等待页面加载
@@ -57,14 +57,21 @@ def user_login(username, password):
     btn_login = driver.find_element_by_xpath('//*[@id="jj_login"]')
     btn_login.click()
 
+    # 用户名
     input_name = driver.find_element_by_id('loginname')
     input_name.clear()
     input_name.send_keys(username)
 
+    # 密码
     input_pwd = driver.find_element_by_id('loginpassword')
     input_pwd.clear()
     input_pwd.send_keys(password)
 
+    # 同意用户协议
+    input_keep = driver.find_element_by_id('login_registerRule')
+    input_keep.click()
+
+    # 保持登入状态
     input_keep = driver.find_element_by_id('cookietime')
     input_keep.click()
 
