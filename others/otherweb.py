@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup as bs
 import time
 
 
-def get_url(url):
+def get_url(url, encording):
 
     # location = os.getcwd() + '/fake_useragent.json'
     # headers = {'User-Agent': UserAgent(path=location).random, 'Accept-Language': 'zh-CN,zh;q=0.9'}
@@ -24,22 +24,77 @@ def get_url(url):
         'Accept-Language': 'zh-CN,zh;q=0.9',
         # 'Connection': 'keep-alive',
         # 'Host': 'api.share.baidu.com',
-        'Referer': 'http://www.biquge.tv/',
+        # 'Referer': 'http://www.biquge.tv/',
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36',
     }
 
     try:
-
+        print('getting url:', url)
         res = requests.get(url, headers=headers)
-        res.encoding = 'gb18030'
+        res.encoding = encording
         soup = bs(res.text, 'lxml')
         return soup
 
     except Exception as e:
+        print('get url failed. Exception:', e)
+        pass
 
-        print('get url failed.')
-        print('Exception:', e)
-        return
+
+def get_novel(url, encording, novelname, author):
+    main_url = re.sub('.com/.*', '.com', url)
+    chapters = get_url(url, encording).select('div#list a')  # 所有章节的 a 标签
+    article = []
+
+    filepath = 'novel/' + novelname + '.txt'
+
+    for tr in chapters[9:]:
+
+        href = main_url + tr.get('href')
+        title = tr.text.replace('       ', '\n\n    【') + '】'
+
+        data = {
+            'href': href,
+            'title': title
+        }
+
+        article.append(data)
+
+    with open(filepath, mode='w+', encoding=encording) as f:
+
+        print('start writing...')
+
+        f.write('    ' + novelname + '\n\n')
+        f.write('    ' + '作者：' + author + '\n\n')
+
+        # text = ''
+        # 循环获取章节文本
+        for pt in article:
+            print('writing:', pt)
+
+            text = '    ' + pt['title'] + '\n\n'
+
+            for i in range(1, 100):  # 分页
+                if i == 1:
+                    chapter_url = pt['href']
+                else:
+                    chapter_url = pt['href'].replace('.html', '_' + str(i) + '.html')
+
+                chapter = get_url(chapter_url, encording)
+                content = chapter.select('div#content')[0]
+                content = utils.loop_tag(content)
+                if content.find('内容已经显示完毕') >= 0:
+                    break
+
+                text = text + content\
+                    .replace(' ', '')\
+                    .replace(', ', '，')\
+                    .replace('    内容未完，下一页继续阅读\n\n', '')\
+                    .replace('    【本章阅读完毕，更多请搜索笔趣阁;https://www.xp7000.com 阅读更多精彩小说】\n\n', '')
+
+            f.write(text)
+            time.sleep(2)  # 暂时挂起
+
+        print('write down.')
 
 
 # 递归调用
@@ -67,57 +122,9 @@ def re_text(text):
     return result
 
 
-def get_novel(url, novelname, author):
-
-    chapters = get_url(url).select('div.listmain a')  # 所有章节的 a 标签
-    article = []
-
-    filepath = os.getcwd() + '/' + novelname + '.txt'
-
-    print(chapters)
-
-    for tr in chapters[:]:
-
-        href = 'https://www.lewentxt.com' + tr.get('href')
-        title = tr.text
-
-        data = {
-            'href': href,
-            'title': title
-        }
-
-        article.append(data)
-
-    with open(filepath, mode='w+', encoding='gb18030') as f:
-
-        print('start writing...')
-
-        f.write('    ' + novelname + '\n\n')
-        f.write('    ' + '作者：' + author + '\n\n')
-
-        # text = ''
-        # 循环获取章节文本
-        for pt in article:
-            print('writing:', pt)
-
-            text = '    ' + pt['title'] + '\n\n'
-
-            try:
-                chapter = get_url(pt['href'])
-            except Exception as e:
-                pass
-
-            content = chapter.select('div#content')[0]
-            text = text + utils.loop_tag(content).replace(' ', '').replace(', ', '，')
-
-            f.write(text)
-            time.sleep(2)  # 暂时挂起
-
-        print('write down.')
-
-
 if __name__ == '__main__':
-    url = 'https://www.lewentxt.com/60/60369/'
-    novelname = '慵来妆'
-    author = '溪畔茶'
-    get_novel(url, novelname, author)
+    url = 'https://www.xp7000.com/book/book.aspx/?id=187621'
+    encording = 'utf-8'
+    novelname = '动心时分'
+    author = '无能狂喵'
+    get_novel(url, encording, novelname, author)
