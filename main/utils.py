@@ -65,3 +65,13 @@ def re_text(text):
 
     return text
 
+
+# 替换作者有话说中表示感谢的文本
+def re_auwords(text):
+    pattern = re.compile(r'感谢在(.*)期间为我投出霸王票或灌溉营养液的小天使哦~([\s\S]*)非常感谢大家对我的支持，我会继续努力的！')
+    text = re.sub(pattern=pattern, repl='', string=text)
+
+    if text.strip() == '作者有话要说：':
+        text = ''
+
+    return text

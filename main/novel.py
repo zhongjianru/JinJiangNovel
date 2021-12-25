@@ -24,6 +24,10 @@ class Novel(object):
         self.chapter_end = chapter_end
         self.cookies = cookies
         self.headers = utils.get_headers(cookies)
+        self.blank = ' '
+        self.space = '    '
+        self.newline = '\n\n'
+        self.split = self.space + '----'
 
     # 根据名称获取小说主页 url
     def get_novelurl(self):
@@ -135,33 +139,36 @@ class Novel(object):
 
         # 获取章节内容后面的作话
         # 必须放在获取章节文本前面，extract() 方法会导致获取 readsmall 标签失败
-        # 改进：在"作者有话要说："后面加上换行
         auwords_pre = ''
         auwords_lst = ''
-        readsmall_1 = ''
-        readsmall_2 = ''
+        readsmall_1 = None
+        readsmall_2 = None
         # 如果写了异常处理的代码，即使 try 这段报错，也会继续执行下去，不会中断
         try:
             # 章节前面的作话
             readsmall_1 = soup.select('div.noveltext div#show')[0].find_next_sibling('div', attrs={'class': 'readsmall'})
             auwords_pre = utils.loop_tag(readsmall_1)
-            auwords_pre = auwords_pre[:11] + '\n\n' + '    ' + auwords_pre[11:]
-            auwords_pre = auwords_pre + '    ----' + '\n\n'
-        except Exception as e:
-            pass  # 获取不到元素：list index out of range
-
-        try:
             # 章节后面的作话
             readsmall_2 = soup.select('div.noveltext div#favoriteshow_3')[0].find_next_sibling('div', attrs={'class': 'readsmall'})
             auwords_lst = utils.loop_tag(readsmall_2)
-            auwords_lst = auwords_lst[:11] + '\n\n' + '    ' + auwords_lst[11:]
-            auwords_lst = '    ----' + '\n\n' + auwords_lst
         except Exception as e:
             pass
 
         # 如果两个作话取出来是一样的，说明只有后一个作话，将前一个置为空
         if readsmall_1 == readsmall_2:
             auwords_pre = ''
+
+        # 替换作者有话说中表示感谢的文本
+        auwords_pre = utils.re_auwords(auwords_pre)
+        auwords_lst = utils.re_auwords(auwords_lst)
+
+        if auwords_pre != '':
+            auwords_pre = auwords_pre[:11] + self.newline + self.space + auwords_pre[11:]
+            auwords_pre = auwords_pre + self.split + self.newline
+
+        if auwords_lst != '':
+            auwords_lst = auwords_lst[:11] + self.newline + self.space + auwords_lst[11:]
+            auwords_lst = self.split + self.newline + auwords_lst
 
         # 方法四，直接取 noveltext 的文本
         textsoup = soup.select('div.noveltext')[0]
@@ -189,19 +196,25 @@ class Novel(object):
         print('start writing in...')
 
         with open(filepath, mode='w+', encoding='gb18030') as f:  # 先打开文件再进入循环，每次写入覆盖文件（如果文件不存在则先创建）
-            f.write('    ' + novel_info['title'] + '\n\n')
-            f.write('    ' + '作者：' + novel_info['author'] + '\n\n')
-            f.write(novel_info['summary'] + '\n')
+            summary = ''
+            summary = summary + self.space + novel_info['title'] + self.newline
+            summary = summary + self.space + '作者：' + novel_info['author'] + self.newline
+            summary = summary + novel_info['summary'] + self.newline
+            f.write(summary)
 
             for chapter in chapters[(self.chapter_bgn-1 if self.chapter_bgn else None): self.chapter_end]:  # 切片选择部分章节
                 try:
                     chaptertext = self.get_noveltext(chapter)  # 这个函数没有处理异常，vip 章节读取从这里开始出错，后面都不会执行
                     print(chapter['num'], chapter['title'], '[VIP]' if chapter['isvip'] else '', chapter['summary'], chapter['url'], '字数:', chapter['wordCount'], '最近修改时间:', chapter['lastModify'])
-                    print('(章节内容为空)') if chaptertext == '' else ''
-                    f.write('    第' + chapter['num'] + '章 ' + chapter['title'] + '\n\n')
-                    # f.write('    【' + chapter['summary'] + '】\n\n')  # 章节简介
-                    f.write(chaptertext + '\n')
-                    time.sleep(random.uniform(2, 5))  # 暂时挂起
+                    print('(章节内容为空)') if chaptertext == '' else None
+                    content = ''
+                    content = content + self.space + '第' + chapter['num'] + '章' + self.blank
+                    # content = content + chapter['title'] + self.blank  # 章节名
+                    content = content + chapter['summary']  # 章节简介
+                    content = content + self.newline
+                    content = content + chaptertext + self.newline
+                    f.write(content)
+                    time.sleep(random.uniform(1, 2))  # 暂时挂起
                 except Exception as e:
                     pass
 

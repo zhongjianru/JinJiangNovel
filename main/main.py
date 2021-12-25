@@ -4,11 +4,11 @@ import novel as nl
 import login as lg
 
 if __name__ == '__main__':
-    novel_name = '多此一女'
-    chapter_bgn = None
+    novel_name = '实用主义者的爱情'
+    chapter_bgn = 110
     chapter_end = None
-    username = '15603006502'
-    password = 'zjr19941228'
+    username = ''
+    password = ''
 
     # lg.user_login(username, password)
 
