@@ -35,34 +35,26 @@ def get_url(url, encording):
         soup = bs(res.text, 'lxml')
         return soup
 
-    except Exception as e:
-        print('get url failed. Exception:', e)
+    except:
         pass
 
 
 def get_novel(url, encording, novelname, author):
-    main_url = re.sub('.com/.*', '.com', url)
-    chapters = get_url(url, encording).select('div#list a')  # 所有章节的 a 标签
+    chapters = get_url(url, encording).select('div.mb20 div.info-chapters a')  # 所有章节的 a 标签
     article = []
-
     filepath = 'novel/' + novelname + '.txt'
 
-    for tr in chapters[9:]:
-
-        href = main_url + tr.get('href')
-        title = tr.text.replace('       ', '\n\n    【') + '】'
-
+    for tr in chapters[:]:
+        href = tr.get('href')
+        title = tr.text
         data = {
             'href': href,
             'title': title
         }
-
         article.append(data)
 
     with open(filepath, mode='w+', encoding=encording) as f:
-
         print('start writing...')
-
         f.write('    ' + novelname + '\n\n')
         f.write('    ' + '作者：' + author + '\n\n')
 
@@ -70,26 +62,22 @@ def get_novel(url, encording, novelname, author):
         # 循环获取章节文本
         for pt in article:
             print('writing:', pt)
-
             text = '    ' + pt['title'] + '\n\n'
-
-            for i in range(1, 100):  # 分页
-                if i == 1:
-                    chapter_url = pt['href']
-                else:
-                    chapter_url = pt['href'].replace('.html', '_' + str(i) + '.html')
-
+            content = ''
+            chapter_url = pt['href']
+            try:
                 chapter = get_url(chapter_url, encording)
-                content = chapter.select('div#content')[0]
+                content = chapter.select('article.content')[0]
                 content = utils.loop_tag(content)
-                if content.find('内容已经显示完毕') >= 0:
-                    break
+            except:
+                pass
 
-                text = text + content\
-                    .replace(' ', '')\
-                    .replace(', ', '，')\
-                    .replace('    内容未完，下一页继续阅读\n\n', '')\
-                    .replace('    【本章阅读完毕，更多请搜索笔趣阁;https://www.xp7000.com 阅读更多精彩小说】\n\n', '')
+            text = text + content\
+                .replace(' ', '')\
+                .replace(', ', '，')\
+                .replace(',', '，')\
+                .replace('    内容未完，下一页继续阅读\n\n', '')\
+                .replace('    【本章阅读完毕，更多请搜索笔趣阁;https://www.xp7000.com 阅读更多精彩小说】\n\n', '')
 
             f.write(text)
             time.sleep(2)  # 暂时挂起
@@ -123,8 +111,8 @@ def re_text(text):
 
 
 if __name__ == '__main__':
-    url = 'https://www.xp7000.com/book/book.aspx/?id=187621'
+    url = 'http://www.5izhenjiang.com/155_155109/'
     encording = 'utf-8'
-    novelname = '动心时分'
-    author = '无能狂喵'
+    novelname = '野狗骨头'
+    author = '休屠城'
     get_novel(url, encording, novelname, author)
