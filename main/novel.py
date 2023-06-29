@@ -16,9 +16,6 @@ from bs4 import BeautifulSoup as bs
 
 class Novel(object):
     def __init__(self, novel_name, chapter_bgn, chapter_end, cookies):
-        userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36'
-        # userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:69.0) Gecko/20100101 Firefox/69.0'
-
         self.novel_name = novel_name
         self.chapter_bgn = chapter_bgn
         self.chapter_end = chapter_end
@@ -171,7 +168,7 @@ class Novel(object):
             auwords_lst = self.split + self.newline + auwords_lst
 
         # 方法四，直接取 noveltext 的文本
-        textsoup = soup.select('div.noveltext')[0]
+        textsoup = soup.select('div.novelbody div')[0]
         [s.extract() for s in textsoup(['script', 'div'])]  # 将标签中的子标签移除（传入 list 移除多个标签）
         novel = utils.loop_tag(textsoup)
 
