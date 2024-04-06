@@ -17,7 +17,7 @@ def get_headers(cookies=''):
 
 # 发起请求
 def get_url(url, headers=''):
-    res = requests.get(url, headers=headers, allow_redirects=False)
+    res = requests.get(url, headers=headers)
     res.encoding = 'gb18030'
     soup = bs(res.text, 'lxml')
     return soup
@@ -63,7 +63,16 @@ def re_text(text):
     pattern4 = re.compile(r'([a-zA-Z]+)(，)([a-zA-Z]+)')
     text = re.sub(pattern=pattern4, repl=r'\1, \3', string=text)  # \1 代表正则匹配到的第一部分
 
-    return text
+    result = ''
+    for t in text.splitlines():
+        t = t.replace('@无限好文，尽在晋江文学城', '')
+        t = t.replace('插入书签', '')
+        t = t.replace('[收藏此章节] [免费得晋江币] [投诉]', '')
+        t = t.replace('[收藏此章节] [推荐给朋友] [投诉色情有害、数据造假 、原创违规、伪更]', '')
+        if len(t.lstrip().rstrip()) != 0:
+            result += '    ' + t.lstrip().rstrip() + '\n\n'
+
+    return result
 
 
 # 替换作者有话说中表示感谢的文本

@@ -7,8 +7,8 @@ from bs4 import BeautifulSoup as bs
 
 # 将字体文件转换为 xml
 def getfontxml(fontname):
-    fontpath = './files/' + fontname + '.woff2'
-    xmlpath = './files/' + fontname + '.xml'
+    fontpath = '../files/' + fontname + '.woff2'
+    xmlpath = '../files/' + fontname + '.xml'
     font = TTFont(fontpath)
     font.saveXML(xmlpath)
     # order = files.getGlyphOrder()
@@ -59,7 +59,7 @@ def getwordsxy(xml):
 
 # 将章节字体与基础字体的显示坐标进行比较，得出混淆字的实际文字
 def findwords(basewords, currwords):
-    with open('./files/re_list.txt', 'r+') as f:
+    with open('../files/re_list.txt', 'r+') as f:
         re_list = f.read()
     res = []
     for p1 in basewords:
@@ -94,10 +94,10 @@ def rewords(text, res):
 def fonttext(text, fontname):
     # 下载章节字体
     url = 'http://static.jjwxc.net/tmp/fonts/' + fontname + '.woff2?h=my.jjwxc.net'
-    fontpath = './files/' + fontname + '.woff2'
-    xmlpath = './files/' + fontname + '.xml'
+    fontpath = '../files/' + fontname + '.woff2'
+    xmlpath = '../files/' + fontname + '.xml'
     response = requests.get(url)
-    with open(fontpath, 'wb') as f:
+    with open(fontpath, 'wb+') as f:
         f.write(response.content)
 
     # 章节字体处理
