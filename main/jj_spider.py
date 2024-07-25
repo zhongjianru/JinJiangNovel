@@ -15,41 +15,29 @@ import utils
 
 class jj_spider:
     def __init__(self):
-        self.novelurl = 'https://www.jjwxc.net/onebook.php?novelid=5649664'
+        self.novelurl = 'https://www.jjwxc.net/onebook.php?novelid=3468506'
         self.index = 0
+        self.chapter_bgn = 433  # 默认 None
+        self.chapter_end = 440  # 默认 None
+        # self.driver = webdriver.Chrome(options=opt)  # 可以在这里定义driver，再在其他函数里使用
 
     def spider(self):
+        # 使用已经打开的窗口进行操作，先在终端执行命令启动 Chrome 登陆好网站账户，再启动该脚本
+        # 终端命令：/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222
+        # 下载地址：https://googlechromelabs.github.io/chrome-for-testing/#stable
+        driver_path = '/Users/kinyuchung/Downloads/chromedriver'
+        opt = webdriver.ChromeOptions()
+        opt.add_experimental_option('debuggerAddress', '127.0.0.1:9222')  # 比自动登陆多了一个配置项
+        driver = webdriver.Chrome(options=opt, executable_path=driver_path)
+        driver.get(self.novelurl)
+        print(driver.title)
+        time.sleep(5)
+
         novel = nl.Novel('', '', '', '')
         novelinfo = novel.get_novelinfo(self.novelurl)
         chapters = novel.get_chapters(self.novelurl)
         print(novelinfo)
         print(chapters)
-
-        opt = webdriver.ChromeOptions()
-        driver = webdriver.Chrome(options=opt, executable_path='/Users/kinyuchung/Downloads/chromedriver')
-        driver.get(self.novelurl)
-        time.sleep(5)
-
-        print('start to login...')
-        username = ''
-        password = ''
-        btn_login = driver.find_element_by_id('jj_login')
-        btn_login.click()
-        time.sleep(2)
-        input1 = driver.find_element_by_name('loginname')
-        input1.clear()
-        input1.send_keys(username)
-        time.sleep(2)
-        input2 = driver.find_element_by_name('loginpassword')
-        input2.clear()
-        input2.send_keys(password)
-        time.sleep(2)
-        input3 = driver.find_element_by_id('login_registerRule')
-        input3.click()
-        time.sleep(2)
-        smt_login = driver.find_element_by_id('window_loginbutton')
-        smt_login.click()
-        time.sleep(2)
 
         filepath = '../novel/' + novelinfo['title'] + '.txt'
         print('filepath:', filepath)
@@ -61,14 +49,14 @@ class jj_spider:
             summary = summary + novel.space + '作者：' + novelinfo['author'] + novel.newline
             summary = summary + novelinfo['summary'] + novel.newline
             f.write(summary)
-            for chapter in chapters:
+            for chapter in chapters[(self.chapter_bgn-1 if self.chapter_bgn else None): self.chapter_end]:
                 time.sleep(5)
                 print(chapter['num'], chapter['title'], '[VIP]' if chapter['isvip'] else '', chapter['summary'], chapter['url'], '字数:', chapter['wordCount'], '最近修改时间:', chapter['lastModify'])
                 driver.get(chapter['url'])
 
                 if chapter['isvip']:
                     # vip 章节替换混淆内容
-                    f.write('    第 ' + chapter['num'] + ' 章\n\n')
+                    f.write('    第 ' + chapter['num'] + ' 章 ' + chapter['title'] + '\n\n')
                     repldict = []
                     def complex_repl(match, pos):
                         repl = repldict[self.index][pos]
