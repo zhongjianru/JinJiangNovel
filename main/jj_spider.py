@@ -23,7 +23,7 @@ class jj_spider:
 
     def spider(self):
         # 使用已经打开的窗口进行操作，先在终端执行命令启动 Chrome 登陆好网站账户，再启动该脚本
-        # 终端命令：/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222
+        # 终端命令：/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222 --user-data-dir=/Users/kinyuchung/Downloads/ChromeFiles
         # 下载地址：https://googlechromelabs.github.io/chrome-for-testing/#stable
         driver_path = '/Users/kinyuchung/Downloads/chromedriver'
         opt = webdriver.ChromeOptions()
