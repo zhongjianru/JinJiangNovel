@@ -15,10 +15,10 @@ import utils
 
 class jj_spider:
     def __init__(self):
-        self.novelurl = 'https://www.jjwxc.net/onebook.php?novelid=3468506'
+        self.novelurl = 'https://www.jjwxc.net/onebook.php?novelid=9689287'
         self.index = 0
-        self.chapter_bgn = 433  # 默认 None
-        self.chapter_end = 440  # 默认 None
+        self.chapter_bgn = 110  # 默认 None
+        self.chapter_end = 117  # 默认 None
         # self.driver = webdriver.Chrome(options=opt)  # 可以在这里定义driver，再在其他函数里使用
 
     def spider(self):
@@ -56,7 +56,7 @@ class jj_spider:
 
                 if chapter['isvip']:
                     # vip 章节替换混淆内容
-                    f.write('    第 ' + chapter['num'] + ' 章 ' + chapter['title'] + '\n\n')
+                    f.write('    第' + chapter['num'] + '章 ' + chapter['title'] + '\n\n')
                     repldict = []
                     def complex_repl(match, pos):
                         repl = repldict[self.index][pos]
