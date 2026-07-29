@@ -64,11 +64,17 @@ def re_text(text):
     text = re.sub(pattern=pattern4, repl=r'\1, \3', string=text)  # \1 代表正则匹配到的第一部分
 
     result = ''
+    pattern_span = re.compile(r'<span class="onebook_paragraph_comment_anchor"(.)*<span class="onebook_paragraph_comment_text">')
+    pattern_para = re.compile(r'<span class="onebook_paragraph_comment_bubble_mount">(.)*</span>')
     for t in text.splitlines():
         t = t.replace('@无限好文，尽在晋江文学城', '')
         t = t.replace('插入书签', '')
         t = t.replace('[收藏此章节] [免费得晋江币] [投诉]', '')
         t = t.replace('[收藏此章节] [推荐给朋友] [投诉色情有害、数据造假 、原创违规、伪更]', '')
+        t = t.replace('[添加书签] [推荐给朋友] [免费得晋江币] [投诉]', '')
+        t = re.sub(pattern=pattern_para, repl='', string=t)  # 段评里面有数字，先处理掉
+        t = t.replace('</span>', '')
+        t = re.sub(pattern=pattern_span, repl='', string=t)  # 每个段落开头的span
         if len(t.lstrip().rstrip()) != 0:
             result += '    ' + t.lstrip().rstrip() + '\n\n'
 

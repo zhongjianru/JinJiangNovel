@@ -55,21 +55,15 @@ class jj_spider:
                 driver.get(chapter['url'])
 
                 if chapter['isvip']:
-                    # vip 章节替换混淆内容
-                    f.write('    第' + chapter['num'] + '章 ' + chapter['title'] + '\n\n')
-                    repldict = []
-                    def complex_repl(match, pos):
-                        repl = repldict[self.index][pos]
-                        if repl == 'none':
-                            repl = ''
-                        else:
-                            repl = repl[1:-1]  # 文本前后带的双引号去掉
-                        self.index += 1
-                        return repl
-                    textelement = driver.find_element_by_css_selector('div.novelbody div.noveltext div[id*="content"]')
-                    spanelement = driver.find_elements_by_css_selector('div.novelbody div.noveltext div[id*="content"] span')
+                    # f.write('    第' + chapter['num'] + '章 ' + chapter['title'] + '\n\n')
+                    f.write('    ' + chapter['title'] + ' ' + chapter['summary'] + '\n\n')
+                    textelement = driver.find_element_by_css_selector('div.novelbody div.noveltext div#paragraph_comment_content div[id*="content"]')
                     chaptertext = textelement.get_attribute('innerHTML')
+                    chaptertext = chaptertext.replace('<br>', '\n')
 
+                    # vip 章节有一些隐藏内容在span里面，以下是处理逻辑
+                    repldict = []
+                    spanelement = driver.find_elements_by_css_selector('div.novelbody div.noveltext div#paragraph_comment_content div[id*="content"] span[class^="c_"]')
                     for span in spanelement:
                         spanclass = span.get_attribute('class')
                         before = driver.execute_script("return window.getComputedStyle(arguments[0], '::before').getPropertyValue('content')", span)
@@ -80,11 +74,21 @@ class jj_spider:
                             'after': after
                         }
                         repldict.append(spandata)
-                    chaptertext = chaptertext.replace('<br>', '\n')
-                    self.index = 0
-                    chaptertext = re.sub(r'\<span class="(\w+)"\>', lambda match: complex_repl(match, pos='before'), chaptertext)
-                    self.index = 0
-                    chaptertext = re.sub(r'\</span\>', lambda match: complex_repl(match, pos='after'), chaptertext)
+
+                    def complex_repl(match, pos):
+                        self.index += 1
+                        repl = repldict[self.index][pos]
+                        if repl == 'none':
+                            repl = ''
+                        else:
+                            repl = repl[1:-1]  # 文本前后带的双引号去掉
+                        return repl
+
+                    # 获取before和after属性里面的内容，按照正则匹配后用index映射按顺序进行替换（截止到26.07只有before有内容）可以将before和after拼起来一起替换
+                    self.index = -1
+                    chaptertext = re.sub(r'<span class="c_(\w){3}">', lambda match: complex_repl(match, pos='before'), chaptertext)  # 正则对应 spanelement，匹配数量对不上就会 index out of range
+                    # self.index = -1
+                    # chaptertext = re.sub(r'</span>', lambda match: complex_repl(match, pos='after'), chaptertext)  # 因为span标签太多，没有一一对应，不能这样替换了
 
                     # vip 章节替换混淆字
                     classlist = driver.find_element_by_css_selector('div.novelbody div').get_attribute('class').split()
@@ -92,10 +96,14 @@ class jj_spider:
                     fontname = [font for font in classlist if re.search(pattern, font)]
                     fontname = ''.join(fontname)
                     chaptertext = ft.fonttext(chaptertext, fontname)
-                else:
-                    chaptertext = driver.find_elements_by_css_selector('div.novelbody div')[0].text
 
-                chaptertext = utils.re_text(chaptertext)
+                # 非 vip 章节
+                else:
+                    free_title = driver.find_element_by_css_selector('div.noveltext h2').text
+                    free_content = driver.find_element_by_css_selector('div#paragraph_comment_content').text
+                    chaptertext = free_title + '\n' + free_content
+
+                chaptertext = utils.re_text(chaptertext)  # 最后格式化章节内容：多余的段评等标签在这里处理（测试的时候可以把这行注释掉）
                 f.write(chaptertext)
                 time.sleep(2)
 
