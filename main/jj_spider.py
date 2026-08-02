@@ -15,10 +15,10 @@ import utils
 
 class jj_spider:
     def __init__(self):
-        self.novelurl = 'https://www.jjwxc.net/onebook.php?novelid=9689287'
+        self.novelurl = 'https://www.jjwxc.net/onebook.php?novelid=6797599'
         self.index = 0
-        self.chapter_bgn = 110  # 默认 None
-        self.chapter_end = 117  # 默认 None
+        self.chapter_bgn = 190  # 默认 None
+        self.chapter_end = None  # 默认 None
         # self.driver = webdriver.Chrome(options=opt)  # 可以在这里定义driver，再在其他函数里使用
 
     def spider(self):
@@ -63,32 +63,32 @@ class jj_spider:
 
                     # vip 章节有一些隐藏内容在span里面，以下是处理逻辑
                     repldict = []
-                    spanelement = driver.find_elements_by_css_selector('div.novelbody div.noveltext div#paragraph_comment_content div[id*="content"] span[class^="c_"]')
+                    spanelement = textelement.find_elements_by_css_selector('span[class^="c_"]')
                     for span in spanelement:
                         spanclass = span.get_attribute('class')
                         before = driver.execute_script("return window.getComputedStyle(arguments[0], '::before').getPropertyValue('content')", span)
                         after = driver.execute_script("return window.getComputedStyle(arguments[0], '::after').getPropertyValue('content')", span)
                         spandata = {
                             'class': spanclass,
-                            'before': before,
-                            'after': after
+                            'before': (before[1:-1] if before != 'none' else ''),
+                            'after': (after[1:-1] if after != 'none' else '')
                         }
                         repldict.append(spandata)
 
-                    def complex_repl(match, pos):
+                    def complex_repl(match, bgnpatt, endpatt):
                         self.index += 1
-                        repl = repldict[self.index][pos]
-                        if repl == 'none':
-                            repl = ''
-                        else:
-                            repl = repl[1:-1]  # 文本前后带的双引号去掉
-                        return repl
+                        matchtext = match.group(0)  # 正则匹配结果
+                        repl = re.sub(bgnpatt, repldict[self.index]['before'], matchtext)  # 用before替换标签开头
+                        repl = re.sub(endpatt, repldict[self.index]['after'], repl)  # 用after替换标签结尾
+                        return repl  # 返回替换后结果
 
-                    # 获取before和after属性里面的内容，按照正则匹配后用index映射按顺序进行替换（截止到26.07只有before有内容）可以将before和after拼起来一起替换
+                    # 获取before和after属性里面的内容，按照正则匹配后用index映射按顺序进行替换，正则对应 spanelement，匹配数量对不上就会 index out of range
                     self.index = -1
-                    chaptertext = re.sub(r'<span class="c_(\w){3}">', lambda match: complex_repl(match, pos='before'), chaptertext)  # 正则对应 spanelement，匹配数量对不上就会 index out of range
-                    # self.index = -1
-                    # chaptertext = re.sub(r'</span>', lambda match: complex_repl(match, pos='after'), chaptertext)  # 因为span标签太多，没有一一对应，不能这样替换了
+                    spanbgnpatt = r'<span class="c_(\w){3}">'
+                    spanendpatt = r'</span>'
+                    spanmidpatt = r'.*?'  # 非贪婪匹配，匹配尽可能短的结果（最近的一个闭合标签）
+                    spanpattern = re.compile(spanbgnpatt + spanmidpatt + spanendpatt)
+                    chaptertext = re.sub(spanpattern, lambda match: complex_repl(match, spanbgnpatt, spanendpatt), chaptertext)
 
                     # vip 章节替换混淆字
                     classlist = driver.find_element_by_css_selector('div.novelbody div').get_attribute('class').split()
