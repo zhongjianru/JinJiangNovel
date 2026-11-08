@@ -64,7 +64,7 @@ def re_text(text):
     text = re.sub(pattern=pattern4, repl=r'\1, \3', string=text)  # \1 代表正则匹配到的第一部分
 
     result = ''
-    pattern_span = re.compile(r'<span class="onebook_paragraph_comment_anchor"(.)*<span class="onebook_paragraph_comment_text">')
+    pattern_span = re.compile(r'<span class="onebook_paragraph_comment_anchor(.)*<span class="onebook_paragraph_comment_text">')
     pattern_para = re.compile(r'<span class="onebook_paragraph_comment_bubble_mount">(.)*</span>')
     for t in text.splitlines():
         t = t.replace('@无限好文，尽在晋江文学城', '')
