@@ -15,10 +15,10 @@ import utils
 
 class jj_spider:
     def __init__(self):
-        self.novelurl = 'https://www.jjwxc.net/onebook.php?novelid=6797599'
+        self.novelurl = 'https://www.jjwxc.net/onebook.php?novelid=5832494'
         self.index = 0
-        self.chapter_bgn = 190  # 默认 None
-        self.chapter_end = None  # 默认 None
+        self.chapter_bgn = None  # 默认 None
+        self.chapter_end = 2  # 默认 None
         # self.driver = webdriver.Chrome(options=opt)  # 可以在这里定义driver，再在其他函数里使用
 
     def spider(self):
@@ -55,8 +55,8 @@ class jj_spider:
                 driver.get(chapter['url'])
 
                 if chapter['isvip']:
-                    # f.write('    第' + chapter['num'] + '章 ' + chapter['title'] + '\n\n')
-                    f.write('    ' + chapter['title'] + ' ' + chapter['summary'] + '\n\n')
+                    f.write('    第' + chapter['num'] + '章 ' + chapter['title'] + '\n\n')
+                    # f.write('    ' + chapter['title'] + ' ' + chapter['summary'] + '\n\n')
                     textelement = driver.find_element_by_css_selector('div.novelbody div.noveltext div#paragraph_comment_content div[id*="content"]')
                     chaptertext = textelement.get_attribute('innerHTML')
                     chaptertext = chaptertext.replace('<br>', '\n')
@@ -101,7 +101,7 @@ class jj_spider:
                 else:
                     free_title = driver.find_element_by_css_selector('div.noveltext h2').text
                     free_content = driver.find_element_by_css_selector('div#paragraph_comment_content').text
-                    chaptertext = free_title + '\n' + free_content
+                    chaptertext = '    第' + chapter['num'] + '章 ' + free_title + '\n' + free_content
 
                 chaptertext = utils.re_text(chaptertext)  # 最后格式化章节内容：多余的段评等标签在这里处理（测试的时候可以把这行注释掉）
                 f.write(chaptertext)

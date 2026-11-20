@@ -1,6 +1,7 @@
 import re
 import requests
 from bs4 import BeautifulSoup as bs
+import string
 
 
 # 构造请求头
@@ -75,6 +76,7 @@ def re_text(text):
         t = re.sub(pattern=pattern_para, repl='', string=t)  # 段评里面有数字，先处理掉
         t = t.replace('</span>', '')
         t = re.sub(pattern=pattern_span, repl='', string=t)  # 每个段落开头的span
+        t = t.rstrip(string.digits)  # 删除普通章节结尾段评包含的数字
         if len(t.lstrip().rstrip()) != 0:
             result += '    ' + t.lstrip().rstrip() + '\n\n'
 
